@@ -5,7 +5,7 @@ A real-time monitoring system for illegal logging and environmental acoustic eve
 ---
 
 ## 📂 Project Structure
-
+```bash
 knn-audio-training/
 │
 ├── index.py # Main orchestrator: runs the entire pipeline
@@ -31,7 +31,7 @@ knn-audio-training/
 │
 ├── requirements.txt # Required Python libraries
 └── README.md # Project overview and instructions
-
+```
 ---
 
 ## 🎯 Project Goals
