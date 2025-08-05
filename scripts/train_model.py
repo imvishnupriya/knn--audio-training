@@ -1,5 +1,6 @@
 import os
 import joblib
+import threading
 import numpy as np
 from sklearn.preprocessing import StandardScaler, LabelEncoder
 from sklearn.model_selection import train_test_split
@@ -17,20 +18,34 @@ LABELS_FILE = 'y_labels.npy'
 
 def gather_files_and_labels(data_directory):
     filepaths, labels = [], []
-    for label in os.listdir(data_directory):
-        label_path = os.path.join(data_directory, label)
-        if os.path.isdir(label_path):
-            for file in os.listdir(label_path):
+    for folder_name in os.listdir(data_directory):
+        folder_path = os.path.join(data_directory, folder_name)
+        if os.path.isdir(folder_path):
+            # Extract label from folder name (e.g. tr_chainsaw → chainsaw)
+            if '_' in folder_name:
+                label = folder_name.split('_')[-1]
+            else:
+                label = folder_name
+
+            for file in os.listdir(folder_path):
                 if file.endswith('.wav'):
-                    filepaths.append(os.path.join(label_path, file))
+                    filepaths.append(os.path.join(folder_path, file))
                     labels.append(label)
     return filepaths, labels
 
 
+
 def extract_features_parallel(filepaths, labels, max_workers=8):
     X, y = [], []
+    X, y = [], []
+    file_count = [0]
+    lock = threading.Lock()
+
     def process(filepath, label):
         features = load_clip_and_extract_features(filepath)
+        with lock:
+            file_count[0] += 1
+            print(f"\rProcessed files: {file_count[0]} / {len(filepaths)}", end='', flush=True)
         return features, label
 
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
@@ -44,6 +59,8 @@ def extract_features_parallel(filepaths, labels, max_workers=8):
                 print(f"Error processing file: {e}")
     return np.array(X), np.array(y)
 
+
+# MAIN EXECUTION 
 if os.path.exists(FEATURES_FILE) and os.path.exists(LABELS_FILE):
     print("Loading cached features...")
     X = np.load(FEATURES_FILE)
