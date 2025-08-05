@@ -6,7 +6,10 @@ from utils.feature_extraction import compute_stht
 
 # Hardcoded visualization consistent with your earlier workflow
 data_directory = 'data/dataset_clips'
-classes = sorted(os.listdir(data_directory))
+# classes = sorted(os.listdir(data_directory))
+
+all_classes = os.listdir(data_directory)
+classes = sorted([cls for cls in all_classes if cls in ['chainsaw', 'forest', 'handsaw', 'speech', 'vehicle']])
 num_classes = len(classes)
 
 plt.figure(figsize=(4 * num_classes, 5))
