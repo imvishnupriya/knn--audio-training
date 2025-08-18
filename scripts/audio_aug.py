@@ -1,4 +1,5 @@
 import os
+from tqdm import tqdm   # <-- add this
 from utils.pitch_shifting import pitch_shift_audio
 from utils.time_reversal import reverse_audio
 from utils.fwd_bwd_shifting import time_shift_with_rollover
@@ -24,12 +25,11 @@ for info in input_folder_info:
         if op == 'bn' and info != 'forest':
             continue
 
-        for filename in os.listdir(input_folder):
+        # Wrap the file loop with tqdm
+        for filename in tqdm(os.listdir(input_folder), desc=f"{op} on {info}", unit="file"):
             input_path = os.path.join(input_folder, filename)
             output_filename = f'{op}_{filename}'
             output_path = os.path.join(output_folder, output_filename)
-
-            print(f"{output_filename} -> {output_path}")
 
             try:
                 if op == 'ps':
@@ -49,4 +49,4 @@ for info in input_folder_info:
                     add_noise(input_path, output_path, forest_folder, TARGET_SR=TARGET_SR, BIT_DEPTH=BIT_DEPTH)
 
             except Exception as e:
-                print(f"Error processing {filename} with operation {op}: {e}")
+                tqdm.write(f"Error processing {filename} with operation {op}: {e}")  # keeps errors visible
