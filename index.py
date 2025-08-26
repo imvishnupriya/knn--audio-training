@@ -37,8 +37,8 @@ if __name__ == '__main__':
 
     pipeline_start = time.time()
 
-    run_script("scripts.split_audio")
-    run_script("scripts.audio_aug")
+    # run_script("scripts.split_audio")
+    # run_script("scripts.audio_aug")
 
     run_script("scripts.train_model")
     run_script("scripts.test_model")

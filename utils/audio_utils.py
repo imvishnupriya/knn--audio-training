@@ -2,7 +2,7 @@ import os
 import librosa
 import soundfile as sf
 from tqdm import tqdm
-from .feature_extraction import compute_stht, extract_llf
+from .feature_extraction import compute_stht, extract_llf, generate_feature_index_table
 import numpy as np
 
 def split_audio_to_clips(audio_path, output_dir, label, clip_length=1.0, sr=16000):
@@ -39,3 +39,6 @@ def load_clip_and_extract_features(filepath, sr=16000):
     spectrogram = compute_stht(signal)
     features = extract_llf(spectrogram)
     return np.array(features)
+
+def feature_index_table(num_frames):
+    return generate_feature_index_table(num_frames)
