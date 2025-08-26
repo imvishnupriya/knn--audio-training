@@ -1,5 +1,7 @@
 import os
 import joblib
+import time
+from tqdm import tqdm
 import threading
 import numpy as np
 import pandas as pd
@@ -11,7 +13,7 @@ from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier
 from sklearn.svm import SVC
 from sklearn.model_selection import train_test_split
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from utils.audio_utils import load_clip_and_extract_features
+from utils.audio_utils import load_clip_and_extract_features, feature_index_table
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, classification_report
 
 
@@ -71,6 +73,8 @@ if os.path.exists(FEATURES_FILE) and os.path.exists(LABELS_FILE):
     print("Loading cached features...")
     X = np.load(FEATURES_FILE)
     y = np.load(LABELS_FILE)
+    df = feature_index_table(63)
+    print(df)
 else:
     print("Extracting features, please wait...")
     filepaths, labels = gather_files_and_labels(data_directory)
@@ -79,6 +83,8 @@ else:
     np.save(FEATURES_FILE, X)
     np.save(LABELS_FILE, y)
     print(f"Features cached to {FEATURES_FILE} and {LABELS_FILE}")
+    df = feature_index_table(63)
+    print(df)
 
 
 # ------------------------------
@@ -122,31 +128,50 @@ results_table = []
 # ------------------------------
 # Train & Evaluate
 # ------------------------------
+def show_progress(stop_event, model_name):
+    """Fake progress bar that updates until model finishes training."""
+    with tqdm(total=0, position=0, bar_format="{desc} {elapsed}") as pbar:
+        pbar.set_description(f"Training {model_name}")
+        while not stop_event.is_set():
+            time.sleep(1)
+            pbar.update(0)  # just refresh elapsed time display
+
 for name, model in models.items():
     print(f"\n===== Training {name} =====")
+
+    stop_event = threading.Event()
+    progress_thread = threading.Thread(target=show_progress, args=(stop_event, name))
+    progress_thread.start()
+
+    start_time = time.time()
+
+    # Train model
     model.fit(X_train, y_train)
     y_pred = model.predict(X_test)
 
-    # Metrics (macro-averaged for multi-class)
+    stop_event.set()
+    progress_thread.join()
+
+    elapsed_time = time.time() - start_time
+    print(f"Finished {name} in {elapsed_time:.2f} seconds")
+
+    # Metrics
     acc = accuracy_score(y_test, y_pred)
     precision = precision_score(y_test, y_pred, average="macro")
     recall = recall_score(y_test, y_pred, average="macro")
     f1 = f1_score(y_test, y_pred, average="macro")
 
-    # print(f"{name} Accuracy: {acc:.4f}")
-    # print(classification_report(label_encoder.inverse_transform(y_test),
-    #                             label_encoder.inverse_transform(y_pred)))
-
     # Save model
     joblib.dump(model, os.path.join(model_dir, f"{name.replace(' ', '_').lower()}_model.pkl"))
 
-    # Store results for table
+    # Store results
     results_table.append({
         "Model": name,
         "Accuracy": round(acc, 4),
         "Precision": round(precision, 2),
         "Recall": round(recall, 2),
-        "F1-score": round(f1, 2)
+        "F1-score": round(f1, 2),
+        "Time (s)": round(elapsed_time, 2)
     })
 
 # ------------------------------
