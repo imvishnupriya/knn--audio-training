@@ -19,9 +19,9 @@ def compute_stht(signal, frame_size=512, hop_size=256):
         spectrogram[:, i] = dht(frame)
     return spectrogram
 
-def extract_llf(spectrogram, sr=16000, n_subbands=11):
+def extract_llf(spectrogram, sr=16000, n_subbands=9):
     """
-    Extract 29 LLF features per frame from the STHT spectrogram.
+    Extract 27 LLF features per frame from the STHT spectrogram.
     Returns a flattened feature vector (all frames concatenated).
     """
     features = []
@@ -104,12 +104,12 @@ def extract_llf(spectrogram, sr=16000, n_subbands=11):
 
 # Roll-off (2: 85% & 95%)
 
-# 11 OBSC
+# 9 OBSC
 # --------------------
 # 4 single-valued features
 # 2 roll-off thresholds
-# 11 OBSC sub-bands
-# 16 + 2 + 11 = 29 features per frame
+# 9 OBSC sub-bands
+# 16 + 2 + 9 = 27 features per frame
 # ---------------------
 
 
@@ -123,8 +123,8 @@ def generate_feature_index_table(num_frames=63):
         "Entropy", "Spectral Slope", "Crest Factor", "Spectral Contrast",
         "Spectral Bandwidth", "Spectral Decrease", "Spectral Flux",
         "Spectral Rolloff (85%)", "Spectral Rolloff (95%)"
-    ] + [f"OBSC Sub-band {i+1}" for i in range(11)]  # OBSC expands into 11 features
-    
+    ] + [f"OBSC Sub-band {i+1}" for i in range(9)]  # OBSC expands into 9 features
+
     table_data = []
     feature_len = num_frames  # each feature repeats per frame
     
